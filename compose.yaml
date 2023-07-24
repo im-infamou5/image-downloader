@@ -1,0 +1,33 @@
+version: "3.1"
+
+networks:
+  service_network:
+
+services:
+  postgres:
+    image: 'postgres:latest'
+    environment:
+      - 'POSTGRES_DB=images'
+      - 'POSTGRES_PASSWORD=12345'
+      - 'POSTGRES_USER=user'
+    ports:
+      - '5432:5432'
+    networks:
+      - service_network
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+  migration:
+    image: migration:latest
+    volumes:
+      - ./changelog.yaml:/liquibase/changelog.yaml
+    networks:
+      - service_network
+  service:
+    image: docker.io/library/app:0.0.1-SNAPSHOT
+    environment:
+      - POSTGRES_URL=jdbc:postgresql://postgres:5432/images
+    networks:
+      - service_network
