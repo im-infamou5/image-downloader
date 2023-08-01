@@ -1,0 +1,31 @@
+databaseChangeLog:
+  -  changeSet:
+       id: 1
+       author: im_infamous
+       changes:
+         -  createTable:
+              tableName:  files
+              columns:
+                -  column:
+                     name: id
+                     type: varchar2(100)
+                     constraints:
+                       unique: true
+                       nullable: false
+                -  column:
+                     name: url
+                     type: varchar2(200)
+                - column:
+                    name: size
+                    type: integer
+                -  column:
+                     name: content_type
+                     type: varchar2(50)
+                -  column:
+                     name: content
+                     type: bytea
+  -  changeSet:
+       id:  2
+       author: im_infamous
+       changes:
+         sql: "create materialized view summary as select count(f.id) as files_count, sum(f.size) as files_size from files f with data"

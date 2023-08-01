@@ -2,6 +2,8 @@ package test.interactivestandard.app.service
 
 import kotlinx.coroutines.*
 import mu.KotlinLogging.logger
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.annotation.Profile
 import org.springframework.context.event.EventListener
@@ -13,6 +15,7 @@ import test.interactivestandard.app.client.ImageFetchClient
 import test.interactivestandard.app.entity.FileEntity
 import test.interactivestandard.app.repository.FileRepository
 import test.interactivestandard.app.utils.FileSizeUtils
+import test.interactivestandard.app.utils.FileUtils.hash
 import java.security.MessageDigest
 import java.util.*
 import java.util.concurrent.Executors
@@ -24,7 +27,6 @@ import javax.xml.bind.DatatypeConverter
 class ImageDispatchingService(
     private val imageFetchClient: ImageFetchClient,
     private val fileRepository: FileRepository,
-    private val jdbcTemplate: JdbcTemplate,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
     companion object {
@@ -32,7 +34,6 @@ class ImageDispatchingService(
         private val MAX_PARALLEL_RANGE_PER_100_CONNECTIONS = (0..7)
         private val availableCores = Runtime.getRuntime().availableProcessors() - 1
         private val log = logger {}
-        private val md = MessageDigest.getInstance("SHA-256")
         private val pool = Executors.newFixedThreadPool(availableCores)
         const val URL_PREFIX = "https://loremflickr.com/cache/resized/"
     }
@@ -67,17 +68,6 @@ class ImageDispatchingService(
                     FileSizeUtils.humanReadableByteCountBin(metadata.second.size.toLong())
                 }"
             }
-        }
-    }
-
-    private fun ByteArray.hash(): String {
-        return DatatypeConverter.printHexBinary(md.digest(this)).lowercase()
-    }
-
-    @Scheduled(fixedRate = 1L, timeUnit = TimeUnit.SECONDS)
-    fun refreshSummary() {
-        runBlocking(Dispatchers.IO) {
-            jdbcTemplate.execute("refresh materialized view summary")
         }
     }
 

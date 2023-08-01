@@ -33,7 +33,7 @@ class ImageFetchClient(
             }
         }
         .onFailure {
-            log.error { "Error occured while downloading image" }
+            log.error { "Error occured while downloading image: ${it.cause}" }
             throw it
         }
         .onSuccess {
